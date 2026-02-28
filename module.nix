@@ -45,7 +45,13 @@ in {
         WIZARR_PORT = toString cfg.port;
         TZ = config.time.timeZone;
         HOME = "/var/lib/wizarr";
+        FLASK_SKIP_SCHEDULER = "true";
       };
+
+      preStart = ''
+        # Apply Alembic database migrations
+        ${cfg.package}/bin/wizarr-migrate db upgrade
+      '';
 
       serviceConfig = {
         Type = "simple";
