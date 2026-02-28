@@ -46,7 +46,7 @@ in {
 
         # Map /data/database -> /var/lib/wizarr so the app finds its database
         BindPaths = "/var/lib/wizarr:/data/database";
-        TemporaryFileSystem = "/data:ro";
+        TemporaryFileSystem = "/data";
 
         ExecStart = lib.concatStringsSep " " [
           "${cfg.package}/bin/wizarr"
