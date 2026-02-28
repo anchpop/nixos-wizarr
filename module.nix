@@ -22,6 +22,20 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
+    users.users.wizarr = {
+      isSystemUser = true;
+      group = "wizarr";
+      home = "/var/lib/wizarr";
+    };
+    users.groups.wizarr = { };
+
+    # The app checks if /data exists and uses /data/database for its SQLite DB.
+    # Create that path as a symlink to the proper state directory.
+    systemd.tmpfiles.rules = [
+      "d /var/lib/wizarr 0750 wizarr wizarr -"
+      "L+ /data/database - - - - /var/lib/wizarr"
+    ];
+
     systemd.services.wizarr = {
       description = "Wizarr media server invitation manager";
       after = [ "network.target" ];
@@ -33,20 +47,12 @@ in {
         HOME = "/var/lib/wizarr";
       };
 
-      preStart = ''
-        # Run database migrations
-        ${cfg.package}/bin/wizarr-migrate db upgrade
-      '';
-
       serviceConfig = {
         Type = "simple";
-        DynamicUser = true;
+        User = "wizarr";
+        Group = "wizarr";
         StateDirectory = "wizarr";
         CacheDirectory = "wizarr";
-
-        # Map /data/database -> /var/lib/wizarr so the app finds its database
-        BindPaths = "/var/lib/wizarr:/data/database";
-        TemporaryFileSystem = "/data";
 
         ExecStart = lib.concatStringsSep " " [
           "${cfg.package}/bin/wizarr"
