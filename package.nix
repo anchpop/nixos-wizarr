@@ -51,6 +51,7 @@ let
   pythonEnv = python313.withPackages (ps: with ps; [
     apprise
     cachetools
+    cryptography
     email-validator
     flask
     flask-apscheduler
@@ -64,6 +65,7 @@ let
     flask-sqlalchemy
     flask-wtf
     gunicorn
+    ldap3
     markdown
     packaging
     plexapi
@@ -82,20 +84,20 @@ let
   src = fetchFromGitHub {
     owner = "wizarrrr";
     repo = "wizarr";
-    tag = "v2026.2.1";
-    hash = "sha256-sUC4T6gQV11xJ/jj8a2D+jy5MHgYnfqlxVOInfkFz8E=";
+    tag = "v2026.7.1";
+    hash = "sha256-vVHByRoIRk5Qx/PlnyLPtxU2Kfh90VqzhhxkWBI8LnM=";
   };
 
   npmDeps = fetchNpmDeps {
     name = "wizarr-npm-deps";
     inherit src;
     sourceRoot = "${src.name}/app/static";
-    hash = "sha256-wyJlehJEFdtEj7Bh1bBcn4ZcJutJ5C35d9j8lACAS2s=";
+    hash = "sha256-MXlpj+VsWOQlX3QuPqHsPj5H6j4nFWiCHxy9RbmgL6I=";
   };
 
 in stdenv.mkDerivation {
   pname = "wizarr";
-  version = "2026.2.1";
+  version = "2026.7.1";
 
   inherit src;
 
@@ -114,7 +116,7 @@ in stdenv.mkDerivation {
     runHook preBuild
 
     # Build frontend assets (Tailwind CSS + vendor JS)
-    npm --prefix app/static run build
+    DOCKER_BUILD=true npm --prefix app/static run build
 
     # Compile Babel translations
     ${pythonEnv}/bin/pybabel compile --use-fuzzy -d app/translations
