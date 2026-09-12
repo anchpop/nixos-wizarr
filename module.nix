@@ -85,6 +85,29 @@ in {
         listed here keep Wizarr's defaults and stay editable in the UI.
       '';
     };
+
+    apiKeys = lib.mkOption {
+      type = lib.types.attrsOf lib.types.path;
+      default = { };
+      example = lib.literalExpression ''
+        {
+          hermes = config.sops.secrets."wizarr/api_key".path;
+        }
+      '';
+      description = ''
+        API keys for Wizarr's REST API (`X-API-Key`), keyed by the name
+        Wizarr shows for the key. Each value is a file containing the raw
+        key; it must be readable by the `wizarr` user.
+
+        Wizarr normally mints API keys in its admin UI, shows the value once
+        and keeps only a hash. Setting this option reconciles the hash of
+        each file's contents into the database on every service start, so a
+        secret manager can own the key and the same value can be handed to
+        the API's consumers. Keys created in the UI are left alone. The rows
+        need an admin account to own them, so keys only appear once Wizarr's
+        first-run setup has been completed.
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -123,6 +146,12 @@ in {
         # Must run after migrations: it writes the wizard_step table directly.
         ${pkgs.python3}/bin/python3 ${./sync-wizard-steps.py} \
           ${stepsSpec} /var/lib/wizarr/database.db
+      '' + lib.optionalString (cfg.apiKeys != { }) ''
+
+        # Reconcile declaratively-held API keys into the api_key table.
+        ${pkgs.python3}/bin/python3 ${./sync-api-keys.py} \
+          /var/lib/wizarr/database.db \
+          ${lib.escapeShellArgs (lib.mapAttrsToList (n: p: "${n}=${p}") cfg.apiKeys)}
       '';
 
       serviceConfig = {
