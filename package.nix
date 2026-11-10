@@ -45,6 +45,10 @@ let
     dependencies = [ python313Packages.flask ];
     pythonImportsCheck = [ "flask_htmx" ];
     doCheck = false;
+    # Its wheel metadata keeps Poetry's `||` syntax in Requires-Dist
+    # (`Flask (>=2.0.2,<3.0.0 || >=3.0.0,<4.0.0)`), which packaging >= 26
+    # rejects, failing the runtime-deps hook. Flask is declared above anyway.
+    dontCheckRuntimeDeps = true;
     meta.license = lib.licenses.bsd3;
   };
 
